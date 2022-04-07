@@ -6,13 +6,14 @@ use std::env;
 fn main() {
     dotenv().unwrap();
     let token = env::var("SLACK_BOT_TOKEN").unwrap();
+    let channel = format!("#{}", env::var("SLACK_POST_CHANNEL").unwrap());
     let client = slack::default_client().unwrap();
     let response = slack::chat::post_message(
         &client,
         &token,
         &PostMessageRequest {
-            channel: "#総合雑談窓",
-            text: ":sore_an::ike::anpanman_an::anpanman_an::anpanman_an:", // TODO
+            channel: &channel,
+            text: ":sore_an::ike::anpanman_pan::anpanman_pan::anpanman_an:", // TODO
             ..PostMessageRequest::default()
         },
     )
