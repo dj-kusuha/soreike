@@ -37,6 +37,9 @@ fn create_body() -> String {
         ":anpanman_an:",
         ":anpanman_pan:",
         ":anpanman_man:",
+        ":aa:",
+        ":mama:",
+        ":an_papa:",
     ];
 
     let mut rng = rand::thread_rng();
