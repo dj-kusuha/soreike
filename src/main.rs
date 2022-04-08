@@ -8,7 +8,7 @@ use slack_api::sync as slack;
 use std::env;
 
 fn main() {
-    dotenv().unwrap();
+    dotenv().ok();
 
     // 投稿文字列を決定する
     let body = create_body();
