@@ -3,12 +3,7 @@
  */
 mod anpanman;
 
-use axum::{
-    http::StatusCode,
-    response::IntoResponse,
-    routing::{get, post},
-    Json, Router,
-};
+use axum::{http::StatusCode, response::IntoResponse, routing::post, Json, Router};
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
@@ -22,8 +17,7 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root`
-        .route("/", get(root))
-        .route("/verify", post(verify_slack_bot));
+        .route("/", post(root));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -35,43 +29,41 @@ async fn main() {
         .unwrap();
 }
 
-// basic handler that responds with a static string
-async fn root() -> &'static str {
-    anpanman::post_anpanman();
+async fn root(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
+    if payload.r#type == "url_verification" && payload.token == "Etj9oY0CrhWMjsN4LqR9iBaz" {
+        let response = SlackResponse {
+            challenge: payload.challenge,
+        };
 
-    "Hello, World!"
-}
+        return (StatusCode::OK, Json(response));
+    }
 
-async fn verify_slack_bot(Json(payload): Json<VerificationRequest>) -> impl IntoResponse {
-    let response = VeificationResponse {
+    if payload.event.r#type == "app_mention" {
+        anpanman::post_anpanman(payload.event.channel);
+    }
+
+    let response = SlackResponse {
         challenge: "".to_string(),
-    };
-
-    if payload.token != "Etj9oY0CrhWMjsN4LqR9iBaz" {
-        tracing::error!("invalid token");
-        return (StatusCode::UNAUTHORIZED, Json(response));
-    }
-
-    if payload.r#type != "url_verification" {
-        tracing::error!("invalid type: {}", payload.r#type);
-        return (StatusCode::UNAUTHORIZED, Json(response));
-    }
-
-    let response = VeificationResponse {
-        challenge: payload.challenge,
     };
 
     (StatusCode::OK, Json(response))
 }
 
 #[derive(Deserialize)]
-struct VerificationRequest {
+struct SlackRequest {
     token: String,
     challenge: String,
     r#type: String,
+    event: SlackEvent,
+}
+
+#[derive(Deserialize)]
+struct SlackEvent {
+    r#type: String,
+    channel: String,
 }
 
 #[derive(Serialize)]
-struct VeificationResponse {
+struct SlackResponse {
     challenge: String,
 }

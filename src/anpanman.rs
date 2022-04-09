@@ -3,12 +3,11 @@ use slack::chat::PostMessageRequest;
 use slack_api::sync as slack;
 use std::env;
 
-pub fn post_anpanman() {
+pub fn post_anpanman(channel: String) {
     // 投稿文字列を決定する
     let body = create_body();
 
     let token = env::var("SLACK_BOT_TOKEN").unwrap();
-    let channel = format!("#{}", env::var("SLACK_POST_CHANNEL").unwrap());
     let client = slack::default_client().unwrap();
     let response = slack::chat::post_message(
         &client,
