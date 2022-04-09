@@ -30,6 +30,8 @@ async fn main() {
 }
 
 async fn root(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
+    println!("{:?}", payload);
+
     if payload.r#type == "url_verification" && payload.token == "Etj9oY0CrhWMjsN4LqR9iBaz" {
         let response = SlackResponse {
             challenge: payload.challenge,
@@ -49,7 +51,7 @@ async fn root(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
     (StatusCode::OK, Json(response))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct SlackRequest {
     token: String,
     challenge: String,
@@ -57,10 +59,14 @@ struct SlackRequest {
     event: SlackEvent,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct SlackEvent {
     r#type: String,
+    user: String,
+    text: String,
+    ts: String,
     channel: String,
+    event_ts: String,
 }
 
 #[derive(Serialize)]
