@@ -1,57 +1,77 @@
 /**
  * Respect for https://zenn.dev/dividebyzero/articles/2815cef7cd446f
  */
+mod anpanman;
+
+use axum::{
+    http::StatusCode,
+    response::IntoResponse,
+    routing::{get, post},
+    Json, Router,
+};
 use dotenv::dotenv;
-use rand::Rng;
-use slack::chat::PostMessageRequest;
-use slack_api::sync as slack;
-use std::env;
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     dotenv().ok();
+    // initialize tracing
+    tracing_subscriber::fmt::init();
 
-    // 投稿文字列を決定する
-    let body = create_body();
+    // build our application with a route
+    let app = Router::new()
+        // `GET /` goes to `root`
+        .route("/", get(root))
+        .route("/verify", post(verify_slack_bot));
 
-    let token = env::var("SLACK_BOT_TOKEN").unwrap();
-    let channel = format!("#{}", env::var("SLACK_POST_CHANNEL").unwrap());
-    let client = slack::default_client().unwrap();
-    let response = slack::chat::post_message(
-        &client,
-        &token,
-        &PostMessageRequest {
-            channel: &channel,
-            text: &body,
-            ..PostMessageRequest::default()
-        },
-    )
-    .unwrap();
-
-    println!("{:?}", response.message);
+    // run our app with hyper
+    // `axum::Server` is a re-export of `hyper::Server`
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
+    tracing::debug!("listening on {}", addr);
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }
 
-fn create_body() -> String {
-    let dat = [
-        ":sore_an:",
-        ":ike:",
-        ":anpanman_an:",
-        ":anpanman_pan:",
-        ":anpanman_man:",
-        ":aa:",
-        ":mama:",
-        ":an_papa:",
-    ];
+// basic handler that responds with a static string
+async fn root() -> &'static str {
+    anpanman::post_anpanman();
 
-    let mut rng = rand::thread_rng();
-    let mut body = String::from(":sore_an::ike:");
+    "Hello, World!"
+}
 
-    // 絵文字数の決定 (3～12)
-    let length = rng.gen_range(3..=12);
-    for _ in 0..length {
-        // 絵文字の決定
-        let index = rng.gen_range(0..dat.len());
-        body.push_str(dat[index]);
+async fn verify_slack_bot(Json(payload): Json<VerificationRequest>) -> impl IntoResponse {
+    let response = VeificationResponse {
+        challenge: "".to_string(),
+    };
+
+    if payload.token != "Etj9oY0CrhWMjsN4LqR9iBaz" {
+        tracing::error!("invalid token");
+        return (StatusCode::UNAUTHORIZED, Json(response));
     }
 
-    return body;
+    if payload.r#type != "url_verification" {
+        tracing::error!("invalid type: {}", payload.r#type);
+        return (StatusCode::UNAUTHORIZED, Json(response));
+    }
+
+    let response = VeificationResponse {
+        challenge: payload.challenge,
+    };
+
+    (StatusCode::OK, Json(response))
+}
+
+#[derive(Deserialize)]
+struct VerificationRequest {
+    token: String,
+    challenge: String,
+    r#type: String,
+}
+
+#[derive(Serialize)]
+struct VeificationResponse {
+    challenge: String,
 }
