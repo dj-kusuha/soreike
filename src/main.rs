@@ -3,7 +3,12 @@
  */
 mod anpanman;
 
-use axum::{http::StatusCode, response::IntoResponse, routing::post, Json, Router};
+use axum::{
+    http::StatusCode,
+    response::IntoResponse,
+    routing::{get, post},
+    Json, Router,
+};
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
@@ -17,7 +22,8 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root`
-        .route("/", post(root));
+        .route("/", get(hello))
+        .route("/slack", post(slack));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -29,19 +35,29 @@ async fn main() {
         .unwrap();
 }
 
-async fn root(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
+async fn hello() -> &'static str {
+    "Hello, world!"
+}
+
+async fn slack(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
     println!("{:?}", payload);
 
-    if payload.r#type == "url_verification" && payload.token == "Etj9oY0CrhWMjsN4LqR9iBaz" {
-        let response = SlackResponse {
-            challenge: payload.challenge,
-        };
+    if let Some(r#type) = payload.r#type {
+        if r#type == "url_verification" && payload.token == "Etj9oY0CrhWMjsN4LqR9iBaz" {
+            if let Some(challenge) = payload.challenge {
+                let response = SlackResponse {
+                    challenge: challenge,
+                };
 
-        return (StatusCode::OK, Json(response));
+                return (StatusCode::OK, Json(response));
+            }
+        }
     }
 
-    if payload.event.r#type == "app_mention" {
-        anpanman::post_anpanman(payload.event.channel);
+    if let Some(event) = payload.event {
+        if event.r#type == "app_mention" {
+            anpanman::post_anpanman(event.channel);
+        }
     }
 
     let response = SlackResponse {
@@ -54,9 +70,9 @@ async fn root(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
 #[derive(Deserialize, Debug)]
 struct SlackRequest {
     token: String,
-    challenge: String,
-    r#type: String,
-    event: SlackEvent,
+    challenge: Option<String>,
+    r#type: Option<String>,
+    event: Option<SlackEvent>,
 }
 
 #[derive(Deserialize, Debug)]
