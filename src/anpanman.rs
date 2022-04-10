@@ -7,9 +7,25 @@ pub fn post_anpanman(channel: String) {
     // 投稿文字列を決定する
     let body = create_body();
 
-    let token = env::var("SLACK_BOT_TOKEN").unwrap();
-    let client = slack::default_client().unwrap();
-    let response = slack::chat::post_message(
+    let token;
+    match env::var("SLACK_BOT_TOKEN") {
+        Ok(t) => token = t,
+        Err(message) => {
+            println!("SLACK_BOT_TOKEN could not be used: {}", message);
+            return;
+        }
+    }
+
+    let client;
+    match slack::default_client() {
+        Ok(c) => client = c,
+        Err(message) => {
+            println!("Failed to get a Slack client: {}", message);
+            return;
+        }
+    }
+
+    match slack::chat::post_message(
         &client,
         &token,
         &PostMessageRequest {
@@ -17,10 +33,10 @@ pub fn post_anpanman(channel: String) {
             text: &body,
             ..PostMessageRequest::default()
         },
-    )
-    .unwrap();
-
-    println!("{:?}", response.message);
+    ) {
+        Ok(response) => println!("{:?}", response.message),
+        Err(message) => println!("Failed to post a message to Slack: {}", message),
+    }
 }
 
 fn create_body() -> String {

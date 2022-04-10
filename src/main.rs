@@ -10,7 +10,7 @@ use axum::{
     Json, Router,
 };
 use dotenv::dotenv;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{env, net::SocketAddr};
 
 #[tokio::main]
@@ -42,16 +42,25 @@ async fn hello() -> &'static str {
 async fn slack(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
     println!("{:?}", payload);
 
-    if let Some(r#type) = payload.r#type {
-        if r#type == "url_verification"
-            && payload.token == env::var("SLACK_VERIFICATION_TOKEN").unwrap()
-        {
-            if let Some(challenge) = payload.challenge {
-                let response = SlackResponse {
-                    challenge: challenge,
-                };
+    match env::var("SLACK_VERIFICATION_TOKEN") {
+        Ok(token) => {
+            if payload.token != token {
+                return (StatusCode::UNAUTHORIZED, String::new());
+            }
+        }
+        Err(message) => {
+            println!("SLACK_VERIFICATION_TOKEN could not be used: {}", message);
+            return (StatusCode::INTERNAL_SERVER_ERROR, String::new());
+        }
+    }
 
-                return (StatusCode::OK, Json(response));
+    if let Some(r#type) = payload.r#type {
+        if r#type == "url_verification" {
+            if let Some(challenge) = payload.challenge {
+                return (
+                    StatusCode::OK,
+                    format!(r#"{{"challenge":"{}"}}"#, challenge),
+                );
             }
         }
     }
@@ -62,11 +71,7 @@ async fn slack(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
         }
     }
 
-    let response = SlackResponse {
-        challenge: "".to_string(),
-    };
-
-    (StatusCode::OK, Json(response))
+    return (StatusCode::OK, String::new());
 }
 
 #[derive(Deserialize, Debug)]
@@ -78,6 +83,7 @@ struct SlackRequest {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 struct SlackEvent {
     r#type: String,
     user: String,
@@ -85,9 +91,4 @@ struct SlackEvent {
     ts: String,
     channel: String,
     event_ts: String,
-}
-
-#[derive(Serialize)]
-struct SlackResponse {
-    challenge: String,
 }
