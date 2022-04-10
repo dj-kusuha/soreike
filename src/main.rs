@@ -11,7 +11,7 @@ use axum::{
 };
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
+use std::{env, net::SocketAddr};
 
 #[tokio::main]
 async fn main() {
@@ -43,7 +43,9 @@ async fn slack(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
     println!("{:?}", payload);
 
     if let Some(r#type) = payload.r#type {
-        if r#type == "url_verification" && payload.token == "Etj9oY0CrhWMjsN4LqR9iBaz" {
+        if r#type == "url_verification"
+            && payload.token == env::var("SLACK_VERIFICATION_TOKEN").unwrap()
+        {
             if let Some(challenge) = payload.challenge {
                 let response = SlackResponse {
                     challenge: challenge,
