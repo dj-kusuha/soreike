@@ -56,11 +56,14 @@ async fn slack(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
 
     if let Some(r#type) = payload.r#type {
         if r#type == "url_verification" {
-            if let Some(challenge) = payload.challenge {
-                return (
-                    StatusCode::OK,
-                    format!(r#"{{"challenge":"{}"}}"#, challenge),
-                );
+            match payload.challenge {
+                Some(challenge) => {
+                    return (
+                        StatusCode::OK,
+                        format!(r#"{{"challenge":"{}"}}"#, challenge),
+                    )
+                }
+                None => return (StatusCode::BAD_REQUEST, String::new()),
             }
         }
     }
