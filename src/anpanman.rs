@@ -60,6 +60,7 @@ fn create_body() -> String {
         // 絵文字の決定
         let index = rng.gen_range(0..dat.len());
         body.push_str(dat[index]);
+        body.push_str(" ");
     }
 
     return body;
