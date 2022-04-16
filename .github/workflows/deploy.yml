@@ -30,4 +30,3 @@ jobs:
         service: 'soreike'
         source: '.'
         region: 'asia-northeast1'
-        timeout: '20'
