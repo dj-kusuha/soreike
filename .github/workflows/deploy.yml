@@ -27,6 +27,7 @@ jobs:
     - id: 'deploy'
       uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
-        metadata: 'service.yaml'
+        service: 'soreike'
         source: '.'
         region: 'asia-northeast1'
+        timeout: '20'
