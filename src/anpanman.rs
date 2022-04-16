@@ -52,7 +52,7 @@ fn create_body() -> String {
     ];
 
     let mut rng = rand::thread_rng();
-    let mut body = String::from(":sore_an::ike:");
+    let mut body = String::from(":sore_an: :ike: ");
 
     // 絵文字数の決定 (3～12)
     let length = rng.gen_range(3..=12);
