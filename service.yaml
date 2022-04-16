@@ -1,0 +1,46 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    client.knative.dev/user-image: asia-northeast1-docker.pkg.dev/djkusuha/cloud-run-source-deploy/soreike
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+  labels:
+    cloud.googleapis.com/location: asia-northeast1
+  name: soreike
+  namespace: '798446170388'
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '10'
+        client.knative.dev/user-image: asia-northeast1-docker.pkg.dev/djkusuha/cloud-run-source-deploy/soreike
+        run.googleapis.com/client-name: cloud-console
+      name: soreike-00011-buq
+    spec:
+      containerConcurrency: 10
+      containers:
+      - env:
+        - name: SLACK_VERIFICATION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: soreike-slack-verification-token
+        - name: SLACK_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: soreike-slack-token
+        image: asia-northeast1-docker.pkg.dev/djkusuha/cloud-run-source-deploy/soreike
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 128Mi
+      serviceAccountName: soreike-service-account@djkusuha.iam.gserviceaccount.com
+      timeoutSeconds: 20
+  traffic:
+  - latestRevision: true
+    percent: 100
