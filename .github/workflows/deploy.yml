@@ -28,4 +28,5 @@ jobs:
       uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
         metadata: 'service.yaml'
+        source: '.'
         region: 'asia-northeast1'
