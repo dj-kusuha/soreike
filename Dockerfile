@@ -22,7 +22,7 @@ RUN rm ./target/release/deps/soreike*
 RUN cargo install --path .
 
 # our final base
-FROM debian:stable-slim
+FROM rust:slim
 
 # copy the build artifact from the build stage
 COPY --from=build /soreike/target/release/soreike .
