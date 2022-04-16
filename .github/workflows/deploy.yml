@@ -1,12 +1,12 @@
-name: deploy
+name: 'deploy'
 on:
   push:
     branches:
-      - main
+      - 'main'
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-latest'
 
     # Add "id-token" with the intended permissions.
     permissions:
@@ -27,5 +27,5 @@ jobs:
     - id: 'deploy'
       uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
-        metadata: service.yaml
-        region: asia-northeast1
+        metadata: 'service.yaml'
+        region: 'asia-northeast1'
