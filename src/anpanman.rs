@@ -1,12 +1,10 @@
 use rand::Rng;
+use regex::Regex;
 use slack::chat::PostMessageRequest;
 use slack_api::sync as slack;
 use std::env;
 
-pub fn post_anpanman(channel: String) {
-    // 投稿文字列を決定する
-    let body = create_body();
-
+pub fn post_anpanman(channel: &str, text: &str) {
     let token;
     match env::var("SLACK_BOT_TOKEN") {
         Ok(t) => token = t,
@@ -25,11 +23,21 @@ pub fn post_anpanman(channel: String) {
         }
     }
 
+    // 投稿文字列を決定する
+    let mut body = create_body();
+    let regex = Regex::new(r"10連").unwrap();
+
+    if regex.is_match(text) {
+        for _ in 0..9 {
+            body = body + "\n" + create_body().as_ref();
+        }
+    }
+
     match slack::chat::post_message(
         &client,
         &token,
         &PostMessageRequest {
-            channel: &channel,
+            channel,
             text: &body,
             ..PostMessageRequest::default()
         },

@@ -70,7 +70,7 @@ async fn slack(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
 
     if let Some(event) = payload.event {
         if event.r#type == "app_mention" {
-            anpanman::post_anpanman(event.channel);
+            anpanman::post_anpanman(&event.channel, &event.text);
         }
     }
 
