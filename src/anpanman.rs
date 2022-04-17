@@ -29,7 +29,8 @@ pub fn post_anpanman(channel: &str, text: &str) {
 
     if regex.is_match(text) {
         for _ in 0..9 {
-            body = body + "\n" + create_body().as_ref();
+            body.push_str("\n");
+            body.push_str(create_body().as_str());
         }
     }
 
