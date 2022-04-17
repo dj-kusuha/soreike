@@ -26,6 +26,8 @@ jobs:
     
     - id: 'deploy'
       uses: 'google-github-actions/deploy-cloudrun@v0'
+      env:
+        CLOUDSDK_BUILDS_TIMEOUT: 1200
       with:
         service: 'soreike'
         source: '.'
